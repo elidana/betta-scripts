@@ -1,0 +1,114 @@
+#! /bin/csh -f
+
+gmtdefaults -D > .gmtdefaults4
+gmtset PAPER_MEDIA A4+
+gmtset LABEL_FONT_SIZE 10
+gmtset ANNOT_FONT_SIZE 10
+gmtset HEADER_FONT_SIZE 10
+gmtset ANNOT_OFFSET 0.1
+gmtset HEADER_OFFSET 0.2
+gmtset GRID_PEN_PRIMARY thin,-
+gmtset BASEMAP_TYPE plain
+
+set out = out-figure06.ps
+
+set vel = globk_gras_13225-229.offsets
+
+set geonet  = /home/elidana/work/geonet.lonlat
+set linz    = /home/elidana/work/linz.lonlat
+set geos    = /home/elidana/work/cook-earthquakes/nzgs2013/geosyst.lonlat
+set quakes  = quake_20131029_1320.csv
+set cmtsol  = GeoNet_CMT_solutions.csv
+set grid    = /home/elidana/Documents/grids/nzdtm.grd
+
+## -----
+set quakeid = 2013p613797
+set date = 2013-08-16
+set col1 = cyan
+## ----
+
+set quake1 = tmp1.$$
+set quake2 = tmp2.$$
+set cpt    = tmp5.$$
+set shade  = tmp6.$$
+
+set J = -JM18
+set R = -R173.0/175.5/-42.0/-40.9
+
+set A = -A0.25/0.35/0.3
+set Se = -Se0.015/0.95/12
+
+makecpt -Cgray -T-500/4000/100 -I -Z > $cpt
+
+set symgeon = "-St0.4  -W1/0"
+set symlinz = "-Ss0.5  -W1/0"
+set symgeos = "-Sd0.3  -W1/0"
+
+set col30  = yellow
+set colone = orange
+set colten = red
+## -----
+
+grdgradient $grid -Nt0.5 -A325 -G$shade
+grdimage $grid $J $R -I$shade -C$cpt -K -Y10 -P > $out
+#pscoast $J $R -B0.5a1WNse -W1 -S180/230/255 -Df -K -O >> $out
+pscoast $J $R -B0.5a1WNse -W1 -S255         -Df -K -O >> $out
+
+
+## -- seismicity ----
+## -- selects August 16 earthquakes
+grep $date $quakes | awk 'BEGIN {FS=","} {print $4,$5,$7,substr($3,1,10)}' | sed -e 's/-//2g' > $quake1
+
+set a1 = `sed -n '/'$quakeid'/=' $quakes`
+set aa2 = `grep $date $quakes | head -1 | awk 'BEGIN {FS=","} {print $3}'`
+set a2 = `sed -n '/'${aa2}'/=' $quakes`
+sed -n ''${a2}','${a1}' p' $quakes | awk 'BEGIN {FS=","} {print $4,$5,$7,substr($3,1,10)}' > $quake2
+
+awk '{if ($3 >= 2.5 && $3 < 4) print $0}' $quake1 | psxy $J $R -Sc0.08 -Ggray -K -O >> $out
+awk '{if ($3 >= 2.5 && $3 < 4) print $0}' $quake2 | psxy $J $R -Sc0.08 -G$col1 -K -O >> $out
+awk '{if ($3 >= 4.0 && $3 < 5) print $0}' $quake1 | psxy $J $R -Sc0.15 -Ggray -W1/0 -K -O >> $out
+awk '{if ($3 >= 4.0 && $3 < 5) print $0}' $quake2 | psxy $J $R -Sc0.15 -G$col1 -W1/0 -K -O >> $out
+awk '{if ($3 >= 5.0 && $3 < 6) print $0}' $quake1 | psxy $J $R -Sc0.3  -Ggray -W1/0 -K -O >> $out
+awk '{if ($3 >= 5.0 && $3 < 6) print $0}' $quake2 | psxy $J $R -Sc0.3  -G$col1 -W1/0 -K -O >> $out
+
+awk '{if ($3 >= 6.0 )          print $0}' $quake2 | psxy $J $R -Sa0.8  -G$col1 -W1/0 -K -O >> $out
+
+## -- focal mechanism
+set lo = 173.4
+set la = -41.4
+grep $quakeid $cmtsol \
+ | awk -v a=$lo -v b=$la 'BEGIN {FS=","} {print $4,$3,$14,$5,$6,$7,$8,$9,$10,substr($13,1,4),substr($13,5,4),a,b,substr($2,1,8)}' \
+ | psmeca $J $R -Sc8/12 -G$col1 -L1/0 -C1/0 -K -O >> $out
+
+
+## -- GPS
+awk '{print $1, $2, $3, $4, $7, $8, $9}'  $vel | psvelo $J $R $Se $A -L -Gred -W2/0 -E255 -K -O -H3 >> $out
+
+## -- arrow legend
+echo 173.0 -42.0  > box.$$
+echo 173.5 -42.0 >> box.$$
+echo 173.5 -41.9 >> box.$$
+echo 173.0 -41.9 >> box.$$
+echo 173.0 -42.0 >> box.$$
+
+psxy box.$$ $J $R -W1/0 -G240 -K -O >> $out
+echo 173.2 -41.95 100 0 5 5 0 10 cm | psvelo $J $R $Se $A -G130 -E255 -W1/0 -K -O >> $out
+
+## -- vertical displ
+set J1 = -JM10
+grdimage $grid $J1 $R -I$shade -C$cpt -K -O -Y-3 -X10 >> $out
+pscoast $J1 $R -Bwsne -W1 -S255 -Df -K -O >> $out
+awk '{if ($3 >= 2.5 && $3 < 4) print $0}' $quake2 | psxy $J1 $R -Sc0.04 -G$col1 -K -O >> $out
+awk '{if ($3 >= 4.0 && $3 < 5) print $0}' $quake2 | psxy $J1 $R -Sc0.08 -G$col1 -W1/0 -K -O >> $out
+awk '{if ($3 >= 5.0 && $3 < 6) print $0}' $quake2 | psxy $J1 $R -Sc0.15 -G$col1 -W1/0 -K -O >> $out
+awk '{if ($3 >= 6.0 )          print $0}' $quake2 | psxy $J1 $R -Sa0.4  -G$col1 -W1/0 -K -O >> $out
+awk '{print $1, $2, 0, $10,0,0,0}' $vel | psvelo $J1 $R $Se $A -N -L -Gorange -W2/0 -E255 -K -O -H3 >> $out
+psxy box.$$ $J $R -W1/0 -G240 -K -O >> $out
+echo 173.2 -41.95 100 0 5 5 0 10 cm | psvelo $J $R $Se $A -G130 -E255 -W1/0 -K -O >> $out
+
+
+
+
+rm *.$$
+#ps2jpg $out
+gs $out

@@ -1,0 +1,135 @@
+#! /bin/csh -f
+
+gmtdefaults -D > .gmtdefaults4
+gmtset PAPER_MEDIA A4+
+gmtset LABEL_FONT_SIZE 10
+gmtset ANNOT_FONT_SIZE 10
+gmtset HEADER_FONT_SIZE 10
+gmtset ANNOT_OFFSET 0.1
+gmtset HEADER_OFFSET 0.2
+gmtset GRID_PEN_PRIMARY thin,-
+gmtset BASEMAP_TYPE plain
+
+
+set out = out-figure04.ps
+
+set geonet  = /home/elidana/work/geonet.lonlat
+set linz    = /home/elidana/work/linz.lonlat
+set geos    = /home/elidana/work/cook-earthquakes/nzgs2013/geosyst.lonlat
+set quakes  = quake_20131029_1320.csv
+set cmtsol  = /home/elidana/work/GeoNet_CMT_solutions.csv
+set grid    = /home/elidana/Documents/grids/nzdtm.grd
+
+## -----
+set dir = /scratch/elidana
+set doy = 228
+set hh  = 02
+set quakeid = 2013p613797
+set date = 2013-08-16
+set col1 = cyan
+## ----
+
+set quake1 = tmp1.$$
+set quake2 = tmp2.$$
+set onehz  = tmp3.$$
+set tenhz  = tmp4.$$
+set cpt    = tmp5.$$
+set shade  = tmp6.$$
+
+
+ls ${dir}/hrdata-1hz/raw/2013/${doy}/????????????${hh}???.T0?  | awk 'BEGIN {FS="/"} {print substr($NF,1,4)}' | sort -u | awk '{print tolower($1)}' > $onehz
+ls ${dir}/hrdata-10hz/raw/2013/${doy}/????????????${hh}???.T0? | awk 'BEGIN {FS="/"} {print substr($NF,1,4)}' | sort -u | awk '{print tolower($1)}' > $tenhz
+
+
+
+set J = -JM15
+set R = -R173.0/175.5/-42.0/-40.9
+
+makecpt -Cgray -T-500/4000/100 -I -Z > $cpt
+
+set symgeon = "-St0.4  -W1/0"
+set symlinz = "-Ss0.5  -W1/0"
+set symgeos = "-Sd0.3  -W1/0"
+
+set col30  = yellow
+set colone = orange
+set colten = red
+
+## -----
+
+grdgradient $grid -Nt0.5 -A325 -G$shade
+grdimage $grid $J $R -I$shade -C$cpt -K -Y10 -P > $out
+#pscoast $J $R -B0.5a1WNse -W1 -S180/230/255 -Df -K -O >> $out
+pscoast $J $R -B0.5a1WNse -W1 -S255         -Df -K -O >> $out
+
+
+## -- seismicity ----
+
+## -- selects earthquakes from the beginning up to July 21 M6.5 event
+##set aa = `sed -n '/'$quakeid'/=' $quakes`
+##tail -n +$aa $quakes | awk 'BEGIN {FS=","} {print $4,$5,$7,substr($3,1,10)}' > $quake1
+
+## -- selects July 21 earthquakes
+grep $date $quakes | awk 'BEGIN {FS=","} {print $4,$5,$7,substr($3,1,10)}' | sed -e 's/-//2g' > $quake1
+
+set a1 = `sed -n '/'$quakeid'/=' $quakes`
+set aa2 = `grep $date $quakes | head -1 | awk 'BEGIN {FS=","} {print $3}'`
+set a2 = `sed -n '/'${aa2}'/=' $quakes`
+sed -n ''${a2}','${a1}' p' $quakes | awk 'BEGIN {FS=","} {print $4,$5,$7,substr($3,1,10)}' > $quake2
+
+awk '{if ($3 >= 2.5 && $3 < 4) print $0}' $quake1 | psxy $J $R -Sc0.08 -Ggray -K -O >> $out
+awk '{if ($3 >= 2.5 && $3 < 4) print $0}' $quake2 | psxy $J $R -Sc0.08 -G$col1 -K -O >> $out
+awk '{if ($3 >= 4.0 && $3 < 5) print $0}' $quake1 | psxy $J $R -Sc0.15 -Ggray -W1/0 -K -O >> $out
+awk '{if ($3 >= 4.0 && $3 < 5) print $0}' $quake2 | psxy $J $R -Sc0.15 -G$col1 -W1/0 -K -O >> $out
+awk '{if ($3 >= 5.0 && $3 < 6) print $0}' $quake1 | psxy $J $R -Sc0.3  -Ggray -W1/0 -K -O >> $out
+awk '{if ($3 >= 5.0 && $3 < 6) print $0}' $quake2 | psxy $J $R -Sc0.3  -G$col1 -W1/0 -K -O >> $out
+
+awk '{if ($3 >= 6.0 )          print $0}' $quake2 | psxy $J $R -Sa0.8  -G$col1 -W1/0 -K -O >> $out
+
+## -- focal mechanism
+# Grassmere
+set lo = 173.4
+set la = -41.8
+grep $quakeid $cmtsol \
+ | awk -v a=$lo -v b=$la 'BEGIN {FS=","} {print $4,$3,$14,$5,$6,$7,$8,$9,$10,substr($13,1,4),substr($13,5,4),a,b,substr($2,1,8)}' \
+ | psmeca $J $R -Sc8/12 -G$col1 -L1/0 -C1/0 -K -O >> $out
+
+
+## -- GPS network
+psxy $geos   $J $R $symgeos -G$col30  -K -O >> $out
+grep -f $onehz $geonet | psxy $J $R $symgeon -G$colone -K -O >> $out
+grep -f $tenhz $geonet | psxy $J $R $symgeon -G$colten -K -O >> $out
+grep -f $onehz $linz   | psxy $J $R $symlinz -G$colone -K -O >> $out
+grep -f $tenhz $linz   | psxy $J $R $symlinz -G$colten -K -O >> $out
+
+
+## -- legend vertical
+set h = 4.2
+set upto = `head -2 $quakes | tail -1 | awk 'BEGIN {FS=","} {print substr($3,1,10)}'`
+set D = -Dx15/0/3.9/8.8/BL
+pslegend $R $J $D -C0.3c/0.3c -L1.5 -G245 -F -O << EOF >> $out
+H 10 Helvetica-Bold August 16 seismicity
+G 0.1
+S 0.1 c 0.08 $col1 0.3 0.5 M = 2.5 - 3.9
+S 0.1 c 0.15 $col1 0.3 0.5 M = 4.0 - 4.9
+S 0.1 c 0.3  $col1 0.3 0.5 M = 5.0 - 5.9
+S 0.1 a 0.8  $col1 0.3 0.5 M >= 6.0
+G 0.3
+H 10 Helvetica-Bold Continous GPS
+H 10 Helvetica-Bold network (cGPS)
+G 0.1
+S 0.1 t 0.4  255  0.3 0.5 GeoNet 
+S 0.1 s 0.4  255  0.3 0.5 LINZ
+S 0.1 d 0.25 255  0.3 0.5 GeoSystems
+G 0.1
+S 0.1 c 0.2  $col30  0.3 0.5 30s
+S 0.1 c 0.2  $colone 0.3 0.5 30s, 1s
+S 0.1 c 0.2  $colten 0.3 0.5 30s, 1s, 0.1s
+G 0.1
+EOF
+
+
+
+rm *.$$
+#ps2jpg $out
+gs $out

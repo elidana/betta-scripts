@@ -1,0 +1,99 @@
+#! /bin/csh -f
+
+gmtdefaults -D > .gmtdefaults4
+gmtset PAPER_MEDIA A4+
+gmtset LABEL_FONT_SIZE 10
+gmtset ANNOT_FONT_SIZE 10
+gmtset HEADER_FONT_SIZE 10
+gmtset ANNOT_OFFSET 0.1
+gmtset HEADER_OFFSET 0.2
+gmtset GRID_PEN_PRIMARY thin,-
+gmtset BASEMAP_TYPE plain
+
+
+set out = out-figure02.ps
+
+set geonet  = /home/elidana/work/geonet.lonlat
+set linz    = /home/elidana/work/linz.lonlat
+set linzgeo = /home/elidana/work/linz-geonet.list
+set geos    = /home/elidana/work/cook-earthquakes/nzgs2013/geosyst.lonlat
+
+
+set tenhz  = tmp1.$$
+
+ls /scratch/elidana/hrdata-10hz/raw/2013/???/*c.T0? | awk 'BEGIN {FS="/"} {print substr($NF,1,4)}' \
+ | sort -u | awk '{print tolower($1)}' > $tenhz
+
+set grid = /home/elidana/Documents/grids/nzdtm.grd
+
+set J = -JM15
+set R = -R173.0/175.5/-42.0/-40.9
+
+set cpt = cpt.$$
+makecpt -Cgray -T-500/4000/100 -I -Z > $cpt
+
+set symgeon = "-St0.4  -W1/0"
+set symlinz = "-Ss0.5  -W1/0"
+set symgeos = "-Sd0.3  -W1/0"
+
+set col30  = yellow
+set colone = orange
+set colten = red
+set colrt  = darkred
+
+## -----
+
+grdgradient $grid -Nt0.5 -A325 -Gshade.$$
+grdimage $grid $J $R -Ishade.$$ -C$cpt -K -Y10 -P > $out
+#pscoast $J $R -B0.5a1WNse -W1 -S180/230/255 -Df -K -O >> $out
+pscoast $J $R -B0.5a1WNse -W1 -S255         -Df -K -O >> $out
+
+
+## -- mainshocks
+set quakes = quake_20131029_1320.csv
+set col1 = gray
+set quake1 = tmp2.$$
+awk 'BEGIN {FS=","} {print $4,$5,$7,substr($3,1,10)}' $quakes | sed -e 's/-//2g' > $quake1
+awk '{if ($3 >= 2.5 && $3 < 4) print $0}' $quake1 | psxy $J $R -Sc0.08 -G$col1 -K -O >> $out
+awk '{if ($3 >= 4.0 && $3 < 5) print $0}' $quake1 | psxy $J $R -Sc0.15 -G$col1 -W1/0 -K -O >> $out
+awk '{if ($3 >= 5.0 && $3 < 6) print $0}' $quake1 | psxy $J $R -Sc0.3  -G$col1 -W1/0 -K -O >> $out
+awk '{if ($3 >= 6.0 ) print $0}' $quake1 | psxy $J $R -Sa0.8 -G$col1 -W1/0 -K -O >> $out
+
+
+## -- GPS network
+psxy $geos   $J $R $symgeos -G$col30  -K -O >> $out
+psxy $geonet $J $R $symgeon -G$colone -K -O >> $out
+grep -f $tenhz $geonet | psxy $J $R $symgeon -G$colten -K -O >> $out
+psxy $linz   $J $R $symlinz -G$colone -K -O >> $out
+grep -f $tenhz $linz   | psxy $J $R $symlinz -G$colten -K -O >> $out
+
+grep -f $linz    $geonet | psxy $J $R -St0.2 -G$colrt  -K -O >> $out
+grep -f $linzgeo $geonet | psxy $J $R -St0.2 -G$colrt  -K -O >> $out
+
+
+## -- legend vertical
+set h = 4.2
+set upto = `head -2 $quakes | tail -1 | awk 'BEGIN {FS=","} {print substr($3,1,10)}'`
+set D = -Dx15/0/3.9/8.8/BL
+pslegend $R $J $D -C0.3c/0.3c -L1.5 -G245 -F -O << EOF >> $out
+H 10 Helvetica-Bold cGPS network
+G 0.1
+S 0.1 t 0.4  255  0.3 0.5 GeoNet 
+S 0.1 s 0.4  255  0.3 0.5 LINZ
+S 0.1 d 0.25 255  0.3 0.5 GeoSystems
+G 1
+H 10 Helvetica-Bold sampling rates
+H 10 Helvetica-Bold (seconds)
+G 0.1
+S 0.1 c 0.2  $col30  0.3 0.5 30s
+S 0.1 c 0.2  $colone 0.3 0.5 30s, 1s
+S 0.1 c 0.2  $colten 0.3 0.5 30s, 1s, 0.1s
+S 0.1 t 0.2  $colrt  0.3 0.5 real-time
+G 0.1
+EOF
+
+
+
+rm *.$$
+#ps2jpg $out
+gs $out

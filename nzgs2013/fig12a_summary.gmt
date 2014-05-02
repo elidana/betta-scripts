@@ -1,0 +1,84 @@
+#! /bin/csh -f
+
+gmtdefaults -D > .gmtdefaults4
+gmtset PAPER_MEDIA A4+
+gmtset LABEL_FONT_SIZE 10
+gmtset ANNOT_FONT_SIZE 10
+gmtset HEADER_FONT_SIZE 10
+gmtset ANNOT_OFFSET 0.1
+gmtset HEADER_OFFSET 0.2
+gmtset GRID_PEN_PRIMARY thin,-
+gmtset BASEMAP_TYPE plain
+
+set out = out-figure12a.ps
+
+set vel = globk_cook_13200-204.offsets
+
+set geonet  = /home/elidana/work/geonet.lonlat
+set linz    = /home/elidana/work/linz.lonlat
+set geos    = /home/elidana/work/cook-earthquakes/nzgs2013/geosyst.lonlat
+set quakes  = quake_20131029_1320.csv
+set cmtsol  = /home/elidana/work/GeoNet_CMT_solutions.csv
+set grid    = /home/elidana/Documents/grids/nzdtm.grd
+
+## -----
+set quakeid = 2013p543824
+set date = 2013-07-21
+set col1 = dodgerblue
+## ----
+
+set quake1 = tmp1.$$
+set quake2 = tmp2.$$
+set cpt    = tmp5.$$
+set shade  = tmp6.$$
+
+set J = -JM18
+set R = -R173.5/175.0/-42.0/-41.0
+
+set A = -A0.25/0.35/0.3
+set Se = -Se0.02/0.95/12
+
+makecpt -Cgray -T-500/4000/100 -I -Z > $cpt
+
+set symgeon = "-St0.4  -W1/0"
+set symlinz = "-Ss0.5  -W1/0"
+set symgeos = "-Sd0.3  -W1/0"
+
+set col30  = yellow
+set colone = orange
+set colten = red
+## -----
+
+grdgradient $grid -Nt0.5 -A325 -G$shade
+grdimage $grid $J $R -I$shade -C$cpt -K -Y10 -P > $out
+#pscoast $J $R -B0.5a1WNse -W1 -S180/230/255 -Df -K -O >> $out
+pscoast $J $R -Bwsne -W1 -S255         -Df -K -O >> $out
+
+
+## -- seismicity ----
+## -- selects July 21 earthquakes
+grep $date $quakes | awk 'BEGIN {FS=","} {print $4,$5,$7,substr($3,1,10)}' | sed -e 's/-//2g' > $quake1
+
+awk '{if ($3 >= 2.5 && $3 < 4) print $0}' $quake1 | psxy $J $R -Sc0.08 -G$col1 -K -O >> $out
+awk '{if ($3 >= 4.0 && $3 < 5) print $0}' $quake1 | psxy $J $R -Sc0.15 -G$col1 -W1/0 -K -O >> $out
+awk '{if ($3 >= 5.0 && $3 < 6) print $0}' $quake1 | psxy $J $R -Sc0.3  -G$col1 -W1/0 -K -O >> $out
+awk '{if ($3 >= 6.0 )          print $0}' $quake1 | psxy $J $R -Sa0.8  -G$col1 -W1/0 -K -O >> $out
+
+
+## -- GPS
+awk '{print $1, $2, $3, $4, $7, $8, $9}'  $vel | psvelo $J $R $Se $A -L -Gred -W2/0 -E255 -K -O -H3 >> $out
+
+## -- arrow legend
+echo 173.5 -42.0  > box.$$
+echo 173.9 -42.0 >> box.$$
+echo 173.9 -41.9 >> box.$$
+echo 173.5 -41.9 >> box.$$
+echo 173.5 -42.0 >> box.$$
+
+psxy box.$$ $J $R -W1/0 -G240 -K -O >> $out
+echo 173.65 -41.95 100 0 5 5 0 10 cm | psvelo $J $R $Se $A -G130 -E255 -W1/0 -O >> $out
+
+
+rm *.$$
+#ps2jpg $out
+gs $out

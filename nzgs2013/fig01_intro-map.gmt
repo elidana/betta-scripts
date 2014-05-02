@@ -1,0 +1,127 @@
+#! /bin/csh -f
+
+gmtdefaults -D > .gmtdefaults4
+gmtset PAPER_MEDIA A4+
+gmtset LABEL_FONT_SIZE 10
+gmtset ANNOT_FONT_SIZE 10
+gmtset HEADER_FONT_SIZE 10
+gmtset ANNOT_OFFSET 0.1
+gmtset HEADER_OFFSET 0.2
+gmtset GRID_PEN_PRIMARY thin,-
+gmtset BASEMAP_TYPE plain
+
+
+set out = out-figure01.ps
+
+set quakes = quake_20131029_1320.csv
+set cmtsol = /home/elidana/work/GeoNet_CMT_solutions.csv
+
+set geonet = /home/elidana/work/geonet.lonlat
+set linz   = /home/elidana/work/linz.lonlat
+set geos   = /home/elidana/work/cook-earthquakes/nzgs2013/geosyst.lonlat
+
+set grid = /home/elidana/Documents/grids/nzdtm.grd
+
+set J = -JM15
+set R = -R173.0/175.5/-42.0/-40.9
+
+#set cpt = /home/elidana/work/betta.cpt
+set cpt = cpt.$$
+makecpt -Cgray -T-500/4000/100 -I -Z > $cpt
+
+set col0  = blue
+set col1  = dodgerblue
+set col2  = cyan
+
+
+set symgeos = "-Sd0.3  -Gred -W1/0"
+set symgeon = "-St0.4  -Gred -W1/0"
+set symlinz = "-Ss0.5  -Gred -W1/0"
+
+set quake0 = tmp3.$$
+set quake1 = tmp4.$$
+set quake2 = tmp5.$$
+
+## -----
+
+grdgradient $grid -Nt0.5 -A325 -Gshade.$$
+grdimage $grid $J $R -Ishade.$$ -C$cpt -K -Y10 -P > $out
+#pscoast $J $R -B0.5a1WNse -W1 -S180/230/255 -Df -K -O >> $out
+pscoast $J $R -B0.5a1WNse -W1 -S255         -Df -K -O >> $out
+
+## -- seismicity
+set int1 = 20130721
+set int2 = 20130816
+awk 'BEGIN {FS=","} {print $4,$5,$7,substr($3,1,10)}' $quakes | sed -e 's/-//2g' | awk -v a=$int1 -v b=$int2 '{if ($4 < a) print $0}' > $quake0
+awk 'BEGIN {FS=","} {print $4,$5,$7,substr($3,1,10)}' $quakes | sed -e 's/-//2g' | awk -v a=$int1 -v b=$int2 '{if ($4 >= a && $4 < b) print $0}' > $quake1
+awk 'BEGIN {FS=","} {print $4,$5,$7,substr($3,1,10)}' $quakes | sed -e 's/-//2g' | awk -v a=$int1 -v b=$int2 '{if ($4 >= b) print $0}' > $quake2
+
+awk '{if ($3 >= 2.5 && $3 < 4) print $0}' $quake0 | psxy $J $R -Sc0.08 -G$col0 -K -O >> $out
+awk '{if ($3 >= 2.5 && $3 < 4) print $0}' $quake1 | psxy $J $R -Sc0.08 -G$col1 -K -O >> $out
+awk '{if ($3 >= 2.5 && $3 < 4) print $0}' $quake2 | psxy $J $R -Sc0.08 -G$col2 -K -O >> $out
+
+awk '{if ($3 >= 4.0 && $3 < 5) print $0}' $quake0 | psxy $J $R -Sc0.15 -G$col0 -W1/0 -K -O >> $out
+awk '{if ($3 >= 4.0 && $3 < 5) print $0}' $quake1 | psxy $J $R -Sc0.15 -G$col1 -W1/0 -K -O >> $out
+awk '{if ($3 >= 4.0 && $3 < 5) print $0}' $quake2 | psxy $J $R -Sc0.15 -G$col2 -W1/0 -K -O >> $out
+
+awk '{if ($3 >= 5.0 && $3 < 6) print $0}' $quake0 | psxy $J $R -Sc0.3 -G$col0 -W1/0 -K -O >> $out
+awk '{if ($3 >= 5.0 && $3 < 6) print $0}' $quake1 | psxy $J $R -Sc0.3 -G$col1 -W1/0 -K -O >> $out
+awk '{if ($3 >= 5.0 && $3 < 6) print $0}' $quake2 | psxy $J $R -Sc0.3 -G$col2 -W1/0 -K -O >> $out
+
+awk '{if ($3 >= 6.0 ) print $0}' $quake1 | psxy $J $R -Sa0.8 -G$col1 -W3/0 -K -O >> $out
+awk '{if ($3 >= 6.0 ) print $0}' $quake2 | psxy $J $R -Sa0.8 -G$col2 -W3/0 -K -O >> $out
+
+
+
+## -- focal mechanism
+# Cook
+set id = 2013p543824
+set lo = 173.4
+set la = -41.5
+grep $id $cmtsol \
+ | awk -v a=$lo -v b=$la 'BEGIN {FS=","} {print $4,$3,$14,$5,$6,$7,$8,$9,$10,substr($13,1,4),substr($13,5,4),a,b,substr($2,1,8)}' \
+ | psmeca $J $R -Sc8/12 -G$col1 -L1/0 -C1/0 -K -O >> $out
+# Grassmere
+set id = 2013p613797
+set lo = 173.4
+set la = -41.8
+grep $id $cmtsol \
+ | awk -v a=$lo -v b=$la 'BEGIN {FS=","} {print $4,$3,$14,$5,$6,$7,$8,$9,$10,substr($13,1,4),substr($13,5,4),a,b,substr($2,1,8)}' \
+ | psmeca $J $R -Sc8/12 -G$col2 -L1/0 -C1/0 -K -O >> $out
+
+
+## -- GPS network
+psxy $geonet $J $R $symgeon -K -O >> $out
+psxy $linz   $J $R $symlinz -K -O >> $out
+psxy $geos   $J $R $symgeos -K -O >> $out
+
+
+## -- legend vertical
+set h = 4.2
+set upto = `head -2 $quakes | tail -1 | awk 'BEGIN {FS=","} {print substr($3,1,10)}'`
+set D = -Dx15/0/3.9/8.8/BL
+pslegend $R $J $D -C0.3c/0.3c -L1.5 -G245 -F -O << EOF >> $out
+H 10 Helvetica-Bold Seismicity up to
+H 10 Helvetica-Bold $upto
+G 0.1
+S 0.1 c 0.3  $col0  0.3 0.5 July 18 to July 21
+S 0.1 c 0.3  $col1  0.3 0.5 July21 to August16
+S 0.1 c 0.3  $col2  0.3 0.5 after August 16 
+G 0.2
+S 0.1 c 0.08 255   0.3 0.5 M = 2.5 - 3.9
+S 0.1 c 0.15 255   0.3 0.5 M = 4.0 - 4.9
+S 0.1 c 0.3  255   0.3 0.5 M = 5.0 - 5.9
+S 0.1 a 0.8  255   0.3 0.5 M >= 6.0
+G 0.7
+H 10 Helvetica-Bold Continous GPS
+H 10 Helvetica-Bold network (cGPS)
+G 0.1
+S 0.1 t 0.4  red  0.3 0.5 GeoNet 
+S 0.1 s 0.5  red  0.3 0.5 LINZ
+S 0.1 d 0.3  red  0.3 0.5 GeoSystems
+EOF
+
+
+rm *.$$
+ps2jpg $out
+gs $out

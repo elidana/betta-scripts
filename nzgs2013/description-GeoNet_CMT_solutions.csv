@@ -1,0 +1,50 @@
+1    EVENT_ID    event id
+2    Date        date
+3    Latitude    lat
+4    Longitude   lon
+5    str         strike plane 1
+6    dp          dip plane 1
+7    rake        rake plane 1
+8    str         strike plane 2
+9    dp          dip plane 2
+10   rake        rake plane 2
+11   ML          local magnitude
+12   Mw          moment magnitude
+13   Mo          moment (Nm)
+14   CD          centroid depth (km)
+15   NS          number of stations
+16   DC          % double couple
+17   Mxx
+18   Mxy
+19   Mxz
+20   Myy
+21   Myz
+22   Mzz
+23   VR
+24   Tva
+25   Tpl
+26   Taz
+27   Nva
+28   Npl
+29   Naz
+30   Pva
+31   Ppl
+32   Paz
+
+###### quake file
+quake_20131029_1320.csv 
+
+latest version on:
+http://info.geonet.org.nz/display/home/Cook+Strait+aftershocks+and+forecast+probabilities
+
+to download:
+curl -O http://info.geonet.org.nz/download/attachments/5800007/quake_20131101_0000.csv
+
+###### Moment tensor solution
+GeoNet_CMT_solutions.csv
+
+latest version on:
+http://info.geonet.org.nz/display/appdata/Earthquake+Resources
+
+to download:
+curl -O http://info.geonet.org.nz/download/attachments/1475107/GeoNet_CMT_solutions.csv

@@ -1,0 +1,148 @@
+#! /bin/csh -f
+
+gmtset PAPER_MEDIA A4+
+gmtset INPUT_CLOCK_FORMAT hh:mm:ss
+gmtset PLOT_CLOCK_FORMAT hh
+
+set dir = /home/elidana/work/cook-earthquakes/nzgs2013/track-output/30s-daily
+set sta = cmbl
+set STA = `echo $sta | awk '{print toupper($1)}'`
+set grid = /home/elidana/Documents/grids/nzdtm.grd
+set geonet  = /home/elidana/work/geonet.lonlat
+
+set out = out-figure10.ps
+
+set quakes = quake_20131029_1320.csv
+set cmt    = /home/elidana/work/GeoNet_CMT_solutions.csv
+
+## -----
+set quakeid = 2013p613797
+set date = 2013-08-16
+set col1 = dodgerblue
+set col2 = cyan
+## ----
+set colg = red
+set symgeon = "-St0.4  -W1/0"
+set colten = red
+## ----
+
+set input1  = tmp1.$$
+set qlist   = tmp2.$$
+set cmtlist = tmp3.$$
+set quake1  = tmp4.$$
+set quake2  = tmp5.$$
+set cpt     = tmp6.$$
+set shade   = tmp7.$$
+set eq      = tmp8.$$
+
+
+cat ${dir}/TRAK228.NEU.${sta}.LC | sed -e '/Epoch/d' -e '/(mm)/d' > $input1
+
+set R = -R1/10/-250/30
+set J = -JX17/15
+set J1 = -JX17/5
+
+psbasemap $J $R -B1a2H:"August 16, 2013 (hours)":/f10a50:"${STA} east displacement (mm)":WS -K -Y4 > $out
+
+## -- cumulative seismic moment
+grep 20130816 $cmt | awk 'BEGIN {FS=","} {print $2,$13}' | sed -e 's/20130816//' \
+ | awk '{sum +=$2} {printf"%02s:%02s:%02s%10s%40.2f\n",substr($1,1,2),substr($1,3,2),substr($1,5,2),$2,sum}' > $cmtlist
+set ry = `awk '{print $3}' $cmtlist | minmax -C `
+set R1 = -R1/10/${ry[1]}/${ry[2]}
+echo 10 0 ${ry[2]} >> $cmtlist
+echo 10 0 ${ry[1]} >> $cmtlist
+awk '{print $1,$3}' $cmtlist | psxy $J1 $R1 -B1a2H/1E24a1E25:"cumulative Mo (dyne cm)":E -Glightcyan -W1/blue -K -O >> $out
+
+## -- seismicity ----
+set eqdist = 10
+grep $sta $geonet > $eq
+grep $date $quakes | awk 'BEGIN {FS=","} {print $4,$5,$7,$3,$2}' | sed -e 's/'${date}'T//g' | gmtselect -C$eqdist/$eq -fg > $quake1
+grep $date $quakes | awk 'BEGIN {FS=","} {print $4,$5,$7,$3,$2}' | sed -e 's/'${date}'T//g' > $quake2
+
+foreach quake (`cat $quake1 | awk '{if ($3 >= 6.0 ) print $5}'`)
+ set hh = `grep $quake $quake1 | awk '{print $4}'` 
+ psxy $J $R -W8,$col1 -Bwsne -K -O << END >> $out
+ $hh -1000
+ $hh 1000
+END
+end
+foreach quake (`cat $quake1 | awk '{if ($3 >= 5.0 && $3 < 6) print $5}'`)
+ set hh = `grep $quake $quake1 | awk '{print $4}'`
+ psxy $J $R -W4,$col1,- -K -O << END >> $out
+ $hh -1000
+ $hh 1000
+END
+end
+foreach quake (`cat $quake1 | awk '{if ($3 >= 4.0 && $3 < 5) print $5}'`)
+ set hh = `grep $quake $quake1 | awk '{print $4}'`
+ psxy $J $R -W2,$col1,. -K -O << END >> $out
+ $hh -1000
+ $hh 1000
+END
+end
+
+## -- CMBL east 30s kinematic solution
+set e = `head -1 $input1 | awk '{print $9}'`
+awk -v a=$e '{printf"%02s:%02s:%4.2f%15.5f\n",$4,$5,$6,(($9-a)*1000)}' $input1 | psxy $J $R -Sc0.15 -W1/dark$colg -G$colg -O -K -H >> $out
+
+## plot legend
+psxy $J $R -W1/0 -G255 -K -O << EOF >> $out
+7  -20
+7   30
+10  30
+10 -20
+7  -20
+EOF
+psxy $J $R -W8,$col1 -K -O << END >> $out
+7.2 15 
+7.8 15
+END
+echo 8.0 15 12 0 0 0 "M >= 6.0" | pstext $J $R -K -O >> $out
+psxy $J $R -W4,$col1,- -K -O << END >> $out
+7.2 0
+7.8 0
+END
+echo 8.0 0 12 0 0 0 "M = 5.0 - 5.9" | pstext $J $R -K -O >> $out
+psxy $J $R -W2,$col1,. -K -O << END >> $out
+7.2 -15
+7.8 -15
+END
+echo 8.0 -15 12 0 0 0 "M = 4.0 - 4.9" | pstext $J $R -K -O >> $out
+
+
+### -- map
+set J = -JM7
+set R = -R173.7/174.7/-42.0/-41.2
+makecpt -Cgray -T-500/4000/100 -I -Z > $cpt
+
+grdgradient $grid -Nt0.5 -A325 -G$shade
+grdimage $grid $J $R -I$shade -C$cpt -K -O -X18 -Y7 >> $out
+pscoast $J $R -Bwsne -W1 -S255 -Df -K -O >> $out
+
+awk '{if ($3 >= 4.0 && $3 < 5.0) print $0}' $quake2 | psxy $J $R -Sc0.15 -G$col2 -W1/0 -K -O >> $out
+awk '{if ($3 >= 4.0 && $3 < 5.0) print $0}' $quake1 | psxy $J $R -Sc0.15 -G$col1 -W1/0 -K -O >> $out
+awk '{if ($3 >= 5.0 && $3 < 6) print $0}' $quake2   | psxy $J $R -Sc0.3  -G$col2 -W1/0 -K -O >> $out
+awk '{if ($3 >= 5.0 && $3 < 6) print $0}' $quake1   | psxy $J $R -Sc0.3  -G$col1 -W1/0 -K -O >> $out
+awk '{if ($3 >= 6.0 )          print $0}' $quake2   | psxy $J $R -Sa0.8  -G$col2 -W1/0 -K -O >> $out
+awk '{if ($3 >= 6.0 )          print $0}' $quake1   | psxy $J $R -Sa0.8  -G$col1 -W1/0 -K -O >> $out
+
+grep $sta $geonet | psxy $J $R $symgeon -G$colten -K -O >> $out
+
+set D = -Dx3/0/4/4.5/TL
+pslegend $R $J $D -C0.3c/0.3c -L1.5 -G245 -F -O << EOF >> $out
+H 10 Helvetica-Bold events within $eqdist
+H 10 Helvetica-Bold km from $STA
+G 0.1
+S 0.1 a 0.8  $col1 0.3 0.5 M >= 6.0
+S 0.1 c 0.3  $col1 0.3 0.5 M = 5.0 - 5.9
+S 0.1 c 0.15 $col1 0.3 0.5 M = 4.0 - 4.9
+G 0.3
+S 0.1 t 0.4  red  0.3 0.5 ${STA} cGPS
+EOF
+
+
+
+
+rm *.$$
+gs $out
+

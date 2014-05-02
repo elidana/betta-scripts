@@ -1,0 +1,154 @@
+#! /bin/csh -f
+
+########################################################################################
+####
+#### GMT script to produce a map of GeoNet cGPS sites
+####      will produce a .ps and .jpg file
+####      to use, you may need to change these variables:
+####
+####      out    => name of output .ps and .jpg files
+####      appear => basic = no topography
+####                fancy = with topography
+####                (comment the one you don't want to use)
+####
+####      grid   => put absolute path of GMT grid file you want to use for topography
+####
+########################################################################################
+
+
+## -- parameters that need to be changed
+set grid  = /home/elidana/Documents/grids/nzwater_full.grd
+set out   = fig_map-geonet.ps
+set appear = fancy
+#set appear = basic
+
+
+### --- GMT settings
+gmtdefaults -D > .gmtdefaults4
+gmtset PAPER_MEDIA A4+
+gmtset LABEL_FONT_SIZE 10
+gmtset ANNOT_FONT_SIZE 10
+gmtset HEADER_FONT_SIZE 10
+gmtset ANNOT_OFFSET 0.1
+gmtset HEADER_OFFSET 0.2
+gmtset GRID_PEN_PRIMARY thin,-
+gmtset BASEMAP_TYPE plain
+
+## region of interest for main map
+set colocean  = azure3
+set R  = -R165/180/-48/-34
+set J  = -JM18
+set B  = -B1a5WSne
+## settings for global map (to plot cGPS sites out of New Zealand)
+set colocean1 = azure2
+set colocean1 = 205/225/225
+set J1 = -JG170/-40/7  
+set R1 = -Rg          
+set B1 = -Bwsne
+#set J1 = -JB170/-40/-35/-45/7
+#set R1 = -R140/210/-89/-5
+#set B1 = -Bg20f10a20WSne
+
+## symbol colors
+set sygeonet = steelblue1   ## GeoNet cGPS sites
+set syother  = lightblue1   ## other cGPS sites
+set sylinz   = darkblue     ## PositioNZ cGPS sites
+set syplan   = yellow4      ## planned cGPS sites
+set syperm   = orange       ## permitted cGPS sites
+
+### -- temporary files
+set geonet  = tmp1.$$
+set linz    = tmp2.$$
+set other   = tmp3.$$
+set xml     = tmp4.$$
+set xml1    = tmp5.$$
+set xml2    = tmp6.$$
+set all     = tmp7.$$
+set list    = tmp8.$$
+set planned = tmp9.$$
+set permit  = tmp10.$$
+set poly    = cazz
+set cpt     = cpt.$$  
+
+
+### -- download cGPS coordinates from GeoNet WFS and prepare the coordinate files for the plot
+curl -o $xml  http://magma.geonet.org.nz/ws-delta/site'?type=cgps&status=Operational'
+curl -o $xml1 http://magma.geonet.org.nz/ws-delta/site'?type=cgps&status=Operational&networkName=LI'
+curl -o $xml2 http://magma.geonet.org.nz/ws-delta/site'?type=cgps&status=Operational&networkName=CG'
+
+grep "mark code" $xml  | awk 'BEGIN {FS="="} {print $5,$4,$2}' | sed -e 's/"//g' -e 's/opened//' -e 's/lon//' -e's/name//' \
+ | awk '{printf"%15.5f%15.5f%10s\n",$1,$2,tolower($3)}' | sort -k3 > $all
+grep "mark code" $xml1 | awk 'BEGIN {FS="="} {print $5,$4,$2}' | sed -e 's/"//g' -e 's/opened//' -e 's/lon//' -e's/name//' \
+ | awk '{printf"%15.5f%15.5f%10s\n",$1,$2,tolower($3)}' | sort -k3 > $linz
+grep "mark code" $xml2 | awk 'BEGIN {FS="="} {print $5,$4,$2}' | sed -e 's/"//g' -e 's/opened//' -e 's/lon//' -e's/name//' \
+ | awk '{printf"%15.5f%15.5f%10s\n",$1,$2,tolower($3)}' | sort -k3 > $geonet
+grep "mark code" $xml2 | awk 'BEGIN {FS="="} {print $5,$4,$2}' | sed -e 's/"//g' -e 's/opened//' -e 's/lon//' -e's/name//' \
+ | awk '{printf"%15.5f%15.5f%10s\n",$1,$2,tolower($3)}' | sort -k3 > $geonet
+
+grep "mark code" $xml1 | awk '{print $2}' | sed -e 's/code="//' -e 's/"//' | awk '{print tolower($1)}' | sort >  $list
+grep "mark code" $xml2 | awk '{print $2}' | sed -e 's/code="//' -e 's/"//' | awk '{print tolower($1)}' | sort >> $list
+
+egrep -vf $list $all > $other
+
+## planned cGPS sites
+curl http://magma.geonet.org.nz/ws-delta/site'?type=cgps&status=suitable'  > $xml
+grep "mark code" $xml  | awk 'BEGIN {FS="="} {print $5,$4,$2}' | sed -e 's/"//g' -e 's/opened//' -e 's/lon//' -e's/name//' \
+ | awk '{printf"%15.5f%15.5f%10s\n",$1,$2,tolower($3)}' | sort -k3 > $planned
+curl http://magma.geonet.org.nz/ws-delta/site'?type=cgps&status=permitted' > $xml
+grep "mark code" $xml  | awk 'BEGIN {FS="="} {print $5,$4,$2}' | sed -e 's/"//g' -e 's/opened//' -e 's/lon//' -e's/name//' \
+ | awk '{printf"%15.5f%15.5f%10s\n",$1,$2,tolower($3)}' | sort -k3 > $permit
+
+
+####### -- Create the plot
+if ($appear == basic) then
+  pscoast $J $R $B -Gsnow -S${colocean} -W1/gray52 -Di -K -P > $out
+else if ($appear == fancy) then
+  #makecpt -Cgebco -T-5000/2000/400 > $cpt
+  makecpt -Cgray -T-10000/2000/400 > $cpt
+  grdgradient $grid -Nt0.5 -A325 -Gshade.$$
+  grdimage $grid $J $R -Ishade.$$ -Bwsne -C$cpt -K -P > $out
+  pscoast $J $R $B -S${colocean} -W1/gray52 -Dh -K -O >> $out
+endif
+
+## -- all GeoNet stations
+psxy $planned $J $R -St0.25 -G$syplan   -W1/darkblue -K -O >> $out
+psxy $permit  $J $R -St0.25 -G$syperm   -W1/darkblue -K -O >> $out
+psxy $geonet  $J $R -St0.3 -G$sygeonet -W1/darkblue -K -O >> $out
+psxy $other   $J $R -St0.3 -G$syother  -W1/darkblue -K -O >> $out
+psxy $linz    $J $R -St0.4 -G$sylinz   -W1/darkblue -K -O >> $out
+
+
+## -- legend
+set D = -D1/0/6.5/5.5/BR
+pslegend -R0/1/0/1 $J $D -G245 -F -K -O << EOF >> $out
+H 12 Helvetica-Bold cGPS station key
+G 0.3
+T Fully operational cGPS sites:
+G 0.5
+S 0.2 t 0.5 $sylinz    0.4 0.6 PositioNZ network (Real Time)
+G 0.2
+S 0.2 t 0.4 $sygeonet  0.4 0.6 GeoNet network
+G 0.2
+S 0.2 t 0.4 $syother   0.4 0.6 other sites managed by GeoNet
+G 0.5
+T Future cGPS sites:
+G 0.5
+S 0.2 t 0.3 $syperm    0.4 0.6 under construction
+G 0.2
+S 0.2 t 0.3 $syplan    0.4 0.6 planned
+EOF
+
+
+## -- secondary map for sites outside New Zealand
+pscoast $J1 $R1 $B1 -Gsnow -S${colocean1} -W1/gray52 -Dl -K -O -Y14 -X1 >> $out
+psxy $geonet $J1 $R1 -St0.3 -G$sygeonet -W1/darkblue -K -O >> $out
+psxy $other  $J1 $R1 -St0.3 -G$syother  -W1/darkblue -K -O >> $out
+psxy $linz   $J1 $R1 -St0.3 -G$sylinz   -W1/darkblue -O >> $out
+
+
+
+
+rm *.$$ 
+
+ps2raster -A -E300 -Tj $out
+gs $out

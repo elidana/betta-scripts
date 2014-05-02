@@ -1,0 +1,132 @@
+#! /bin/csh -f
+
+gmtset PAPER_MEDIA A4+
+gmtset LABEL_FONT_SIZE 12
+gmtset BASEMAP_TYPE plain
+
+
+set fix = hamt
+set dir = /home/elidana/work/cook-earthquakes/nzgs2013/track-output/${fix}
+set name = TRAK202.NEU
+set typ = .stacked
+#set typ = ""
+
+set out = out-figure08.ps
+
+set grid  = /home/elidana/Documents/grids/nzdtm.grd
+set grid1 = /home/elidana/Documents/grids/nzwater_full.grd
+set cmtsol = /home/elidana/work/GeoNet_CMT_solutions.csv
+set geonet  = /home/elidana/work/geonet.lonlat
+set linz    = /home/elidana/work/linz.lonlat
+
+## -----
+set quakeid = 2013p543824
+set col1 = dodgerblue
+## ----
+
+set R = -R-20/150/-50/30
+set y = 9
+set J = -JX14/8.5
+
+set symgeon = "-St0.5  -W1/0"
+set symlinz = "-Ss0.6  -W1/0"
+
+set liste = tmp1.$$
+set listn = tmp2.$$
+set shade = tmp3.$$
+set cpt   = tmp4.$$
+
+## east plot
+cat << END > $liste
+nlsn   20  plum
+okoh   10  purple
+with  -10  orange
+wgtn  -20  green
+trwh  -30  darkgreen
+bthl  -40  darkbrown
+END
+## - north plot
+cat << END > $listn
+nlsn   20  plum
+okoh   10  purple
+with    0  orange
+wgtn  -10  green
+trwh  -30  darkgreen
+bthl  -35  darkbrown
+END
+
+
+## time of earthquake is 2013/08/16 02:21:05 plus 16 sec to account of diff between GPS and UTC time
+set leap = 16
+set hh = `echo  5 09 30 $leap | awk '{print $1*3600+$2*60+$3+$4}'`
+
+
+## north
+psbasemap $J $R -Bf10a50:"seconds after 2013/07/21 05\07209\07230":/f5a20:"displacement (cm)":WSne -K > $out
+foreach sta (`cat $listn | awk '{print $1}'`)
+ set file = ${dir}/${name}.${sta}.LC${typ}
+ set n = `head -3 $file | tail -1 | awk '{printf"%20.6f\n",$7}'`
+ set shift = `grep $sta $listn | awk '{print $2}'`
+ set col = `grep $sta $listn | awk '{print $3}'`
+ awk -v h=$hh -v a=$n -v s=$shift '{print (($4*3600+$5*60+$6)-h),(($7-a)*100)+s,($8*100)}' $file \
+  | psxy $J $R -W5/$col -H2 -K -O >> $out
+ echo -15 $shift 10 0 0 0 $sta | pstext $J $R -G$col -W255o -K -O >> $out
+end
+psxy $J $R -W5,0,- -K -O << END >> $out
+0 -1000
+0 1000
+END
+echo 120 25 14 0 0 0 NORTH  | pstext $J $R -W255o -K -O >> $out
+
+
+## east
+psbasemap $J $R -Bf10a50/f5a20:"displacement (cm)":Wsne -K -O -Y$y >> $out
+foreach sta (`cat $liste | awk '{print $1}'`)
+ set file = ${dir}/${name}.${sta}.LC${typ}
+ set e = `head -3 $file | tail -1 | awk '{printf"%20.6f\n",$9}'`
+ set shift = `grep $sta $liste | awk '{print $2}'`
+ set col = `grep $sta $liste | awk '{print $3}'`
+ awk -v h=$hh -v a=$e -v s=$shift '{print (($4*3600+$5*60+$6)-h),(($9-a)*100)+s,($10*100)}' $file \
+  | psxy $J $R -W5/$col -H2 -K -O >> $out
+ echo -15 $shift 10 0 0 0 $sta | pstext $J $R -G$col -W255o -K -O >> $out
+end
+psxy $J $R -W5,0,- -K -O << END >> $out
+0 -1000
+0 1000
+END
+echo 120 25 14 0 0 0 EAST | pstext $J $R -W255o -K -O >> $out
+
+
+## mappetta
+set R1 = -R173.0/175.5/-42.0/-40.9
+set R2 = -R166/179/-48/-34
+set J1 = -JM9
+set J2 = -JM7
+
+makecpt -Cgray -T-500/4000/100 -I -Z > $cpt
+grdgradient $grid -Nt0.5 -A325 -G$shade
+grdimage $grid $J1 $R1 -I$shade -C$cpt -K -O -X15 -Y2.5 >> $out
+pscoast $J1 $R1 -B0.5a1wSnE -W1 -S255 -Df -K -O >> $out
+
+grep $quakeid $cmtsol \
+ | awk 'BEGIN {FS=","} {print $4,$3,$14,$5,$6,$7,$8,$9,$10,substr($13,1,4),substr($13,5,4),0,0}' \
+ | psmeca $J1 $R1 -Sc6/12 -G$col1 -L1/0 -C1/0 -K -O >> $out
+
+foreach sta (`cat $liste | awk '{print $1}'`)
+ set col = `grep $sta $liste | awk '{print $3}'`
+ grep $sta $geonet | psxy $J1 $R1 $symgeon -G$col -W1/0 -K -O >> $out
+ grep $sta $linz   | psxy $J1 $R1 $symlinz -G$col -W1/0 -K -O >> $out
+end
+
+## inset for fixed sta
+grdimage $grid1 $J2 $R2 -C/home/elidana/work/betta.cpt -K -O -Y-11.5 -X1 >> $out
+pscoast $J2 $R2 -B1a5wSnE -W1 -Lf170/-36/170/-36/400k+l -Dl -K -O >> $out
+foreach sta (`cat $liste | awk '{print $1}'`)
+ grep $sta $geonet | psxy $J2 $R2 -St0.4 -G255 -W1/0 -K -O >> $out
+end
+echo 172 -46 12 0 1 0 FIXED STATION | pstext $J2 $R2 -Gred -K -O >> $out
+grep $fix $geonet | psxy $J2 $R2 -Sc0.4 -Gred -W1/0 -O >> $out
+
+
+rm *.$$
+gs $out

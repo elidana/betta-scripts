@@ -1,0 +1,128 @@
+#! /bin/csh -f
+
+## plot qa files taken from ftp://data-out.unavco.org/pub/products/unr_qa/ (Blewitt)
+## columns are:
+##    1 rinex
+##    2 station
+##    3 date
+##    4 acceptedepochs[unit="hr"]     Session period, subtracting epochs devoid of data
+##    5 dataintervalfromteqc[unit"s"] teqc sampling interval
+##    6 dataintervalassumed[unit="s"] QA algorithm sampling interval
+##    7 nsatsrinex                    number of sats in rinex file
+##    8 nsatschecked                  number of sats used in processing
+##    9 percentphasesaccepted         epochs used in processing
+##   10 nphasebiases                  phase biases that could not be repared
+##   11 phaseRMSall[unit="mm"]        post-fit residual all satellites (iono-free L1-L2 comb)
+##   12 phaseRMSmax[unit="mm"]        post-fit residual sats with max RMS (iono-free L1-L2 comb)
+##   13 codeRMSall[unit="m"]          post-fit residual all sat (pseudorange)
+##   14 codeRMSmax[unit="m"]          post-fit residual sats with max RMS (pseudorange)
+##   15 3dPPPsigmaraw[unit="mm"]      formal error in 3d position
+##   16 chi2perDOF                    chi2/DOF
+##   17 3dPPPsigmascaled[unit="mm"]   3d formal error scaled by radq(chi2/DOF)
+
+gmtset PAPER_MEDIA A4+
+gmtset INPUT_DATE_FORMAT yyyy-mm-dd
+gmtset TIME_FORMAT_PRIMARY abbreviated 
+gmtset ANNOT_FONT_SIZE 14p
+gmtset LABEL_FONT_SIZE 14p
+gmtset HEADER_FONT_SIZE 16p
+
+if ($#argv == 0) then
+cat << END
+ qa_timeseries site
+END
+exit
+endif
+
+set sta = `echo $1 | awk '{print toupper($1)}'`
+set l = `echo $sta | awk '{print tolower(substr($1,1,1))}'`
+
+if (! -e ${sta}.qa) then
+ curl -O ftp://data-out.unavco.org/pub/products/unr_qa/by_site/${l}/${sta}.qa
+ if (! -e ${sta}.qa) then
+  echo ${sta}.qa does not exist on Unavco qa archive
+  echo ${sta}.qa does not exist on Unavco qa archive >> notavailable.txt
+  exit
+ endif
+endif
+ls $sta.qa
+
+set infile1 = ${sta}.qa
+
+set out = plotqa_${sta}.ps
+
+set y = 4
+set J = -JX15/$y
+
+set date = `awk 'BEGIN {FS=","} {print $3}'  $infile1 | minmax -fT -C -H`
+set dat1 = `awk 'BEGIN {FS=","} {print $3}'  $infile1 | minmax -fT -C -H`
+
+set rhrs = -R${date[1]}/${date[2]}/0/25
+set rsat = -R${date[1]}/${date[2]}/10/40
+set repo = -R${date[1]}/${date[2]}/0/110
+set rbia = -R${date[1]}/${date[2]}/0/150
+set rphs = -R${date[1]}/${date[2]}/0/45
+set rran = -R${date[1]}/${date[2]}/0/2.9
+set rerr = -R${date[1]}/${date[2]}/0/10
+set rchi = -R${date[1]}/${date[2]}/0/4.5
+
+## -- hours 
+awk 'BEGIN {FS=","} {print $3,$4}' $infile1 \
+ | psxy $J $rhrs -Sc0.1 -Gorange -B4Y/4a12:hours::."$sta - quality assessment parameters":Ws -P -Y22.5 -K > $out
+echo $dat1[1] 2 14 0 0 0 "hours of obs" | pstext $J $rhrs -W255o -Gorange -K -O -N >> $out
+
+## -- satellite numbers
+awk 'BEGIN {FS=","} {print $3,$7}' $infile1 \
+ | psxy $J $rsat -Ss0.2 -Gblack -B4Y/5a10:number:nE -K -O >> $out
+awk 'BEGIN {FS=","} {print $3,$8}' $infile1 \
+ | psxy $J $rsat -Ss0.1 -Ggreen -K -O >> $out
+
+echo $dat1[2] 2 14 0 0 RB "#sats observed" | pstext $J $rhrs -Gblack -W255o -K -O -N >> $out
+echo $dat1[2] 6 14 0 0 RB "#sats checked"  | pstext $J $rhrs -Ggreen -W255o -K -O -N >> $out
+
+## -- epochs accepted and processed
+awk 'BEGIN {FS=","} {print $3,$9}' $infile1 \
+ | psxy $J $repo -Sc0.1 -Gblue -B4Y/f10a20:percent:Wsn -K -O -Y-$y >> $out
+
+awk 'BEGIN {FS=","} {print $3,$10}' $infile1 \
+ | psxy $J $rbia -Sc0.1 -Gred -B4Y/f10a50:number:E -K -O >> $out
+
+echo $dat1[1] 10 14 0 0 0 "%epochs accepted" | pstext $J $repo -Gblue -W255o -K -O -N >> $out
+echo $dat1[2] 10 14 0 0 RB "#phase biases"   | pstext $J $repo -Gred  -W255o -K -O -N >> $out
+
+
+## -- ion-free phase post-fit residuals
+awk 'BEGIN {FS=","} {print $3,$12}' $infile1 \
+ | psxy $J $rphs -Sc0.1 -Gred -B4Y/f2a10e -K -O -Y-$y >> $out
+awk 'BEGIN {FS=","} {print $3,$11}' $infile1 \
+ | psxy $J $rphs -Sc0.1 -Gblue -B4Y/f2a10:mm:Ws -K -O >> $out
+
+echo $dat1[1] 40 14 0 0 0 "ion-free phase post-fit residual RMS" | pstext $J $rphs -Gblue -W255o -K -O -N >> $out
+echo $dat1[1] 32 14 0 0 0 "max sat rms for phase" | pstext $J $rphs -Gred -W255o -K -O -N >> $out
+
+## -- ion-free pseudorange post-fit residuals
+awk 'BEGIN {FS=","} {print $3,$14}' $infile1 \
+ | psxy $J $rran -Sc0.1 -Gred -B4Y/f0.5a1:m:E -K -O -Y-$y >> $out
+awk 'BEGIN {FS=","} {print $3,$13}' $infile1 \
+ | psxy $J $rran -Sc0.1 -Gblue -B4Y/f0.5a1ws -K -O >> $out
+
+echo $dat1[1] 2.5 14 0 0 0 "ion-free pseudorange post-fit residual RMS" | pstext $J $rran -Gblue -W255o -K -O -N >> $out
+echo $dat1[1] 2.0 14 0 0 0 "max sat rms for pseudorange" | pstext $J $rran -Gred -W255o -K -O -N >> $out
+
+## -- formal error 3d position and chi2
+awk 'BEGIN {FS=","} {print $3,$16}' $infile1 \
+ | psxy $J $rchi -Sc0.1 -Gred -B4Y/f0.5a1E -K -O -Y-$y >> $out
+awk 'BEGIN {FS=","} {print $3,$15}' $infile1 \
+ | psxy $J $rerr -Sc0.1 -Gblue -B4Y/f1a2:mm:Ws -K -O >> $out
+
+echo $dat1[1] 8 14 0 0 0 "formal error of 3D position" | pstext $J $rerr -Gblue -W255o -K -O -N >> $out
+echo $dat1[2] 8 14 0 0 RB "chi2/DOF"   | pstext $J $rerr -Gred -W255o -K -O -N >> $out
+
+## -- scaled formal error
+awk 'BEGIN {FS=","} {print $3,$17}' $infile1 \
+ | psxy $J $rerr -Sc0.1 -Gblue -B2Y:year:/f1a2:mm:WSne -K -O -Y-$y >> $out
+echo $dat1[1] 8 14 0 0 LB "(3D formal error)/(sqrt(chi2/DOF))" | pstext $J $rerr -W255o -Gblue -O -N >> $out
+
+
+
+gs $out 

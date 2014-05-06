@@ -1,6 +1,5 @@
 #! /usr/bin/env python
 
-
 import matplotlib.pyplot as plt
 import scipy as sp
 import numpy as np
@@ -8,17 +7,26 @@ import numpy as np
 
 def loadnoisefile(filename):
     file  = open(filename, "r")
+    header1 = file.readline()  ## skip the first line
+    header2 = file.readline()  ## skip the second line
     lines = file.readlines()
     file.close()
     x1 = []
-    y1 = [] 
+    N1 = []
+    E1 = []
+    U1 = []
     for line in lines:
       p = line.split()
       x1.append(float(p[17]))  ## epoch
-      y1.append(float(p[8]))   ## east (NEU)
-    xv = np.array(x1)                ## array of x
-    yv = np.array(y1)                ## array of y
-    return xv, yv
+      N1.append(float(p[6]))   ## North
+      E1.append(float(p[8]))   ## East
+      U1.append(float(p[10]))  ## Up
+    x = np.array(x1)           ## array of x
+    N = np.array(N1)          
+    E = np.array(E1)          
+    U = np.array(U1)          
+    return x, N, E, U
+
 
 def loadmodelfile(filename1):
     file  = open(filename1, "r")
@@ -46,23 +54,25 @@ def calcSpectrum(y,Fs):
     return frq, Y
 
 
-Fs = 1.0;   ## frequency
-Ts = 1.0/Fs;
+### work on GPS data - "Fs" defines the frequency (samples per seconds)
+gpsdir = "/home/elidana/work/sdf_mueller/track-outputs/"
+inputfile  = gpsdir+"TRAK200.NEU.prtu.LC"
+Fs = 1.0;               
+(t,N,E,U) = loadnoisefile(inputfile)
+(frN,yN)  = calcSpectrum(N,Fs)
+(frE,yE)  = calcSpectrum(E,Fs)
+(frU,yU)  = calcSpectrum(U,Fs)
 
-Fs1 = 13.0;   ## frequency (samples per seconds)
-Ts1 = 1.0/Fs;
-
-inputfile  = "TRAK200.NEU.cnst.LC"
-inputfile1 = "GPS_ptoi_E.dat"
-
-(t,y) = loadnoisefile(inputfile)
+## work on Yoshi Model
+modeldir   = "/home/elidana/work/sdf_mueller/models/yoshi/model13_dataset1/"
+inputfile1 = modeldir+"GPS_prtu_E.dat"
+Fs1 = 13.0; 
 (t1,y1) = loadmodelfile(inputfile1)
-
-(frq,Y) = calcSpectrum(y,Fs)
 (frq1,Y1) = calcSpectrum(y1,Fs1)
 
-plt.loglog(frq,abs(Y), 'r')
+plt.loglog(frN,abs(yN), 'r')
 plt.loglog(frq1,abs(Y1), 'k')
+
 plt.xlabel('Freq (Hz)')
 plt.ylabel('|Y(freq)|')
 

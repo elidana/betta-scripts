@@ -15,10 +15,10 @@ def loadnoisefile(filename):
     E1 = []
     U1 = []
     for line in lines:
-      p = line.split()
-      N1.append(float(p[6]))   ## North
-      E1.append(float(p[8]))   ## East
-      U1.append(float(p[10]))  ## Up
+       p = line.split()
+       N1.append(float(p[6]))   ## North
+       E1.append(float(p[8]))   ## East
+       U1.append(float(p[10]))  ## Up
     N = np.array(N1)          
     E = np.array(E1)          
     U = np.array(U1)          
@@ -31,9 +31,9 @@ def loadmodelfile(filename1):
     file.close()
     y1 = []
     for line in lines:
-      p = line.split()
-      y1.append(float(p[1]))  
-    yv = np.array(y1)
+       p = line.split()
+       y1.append(float(p[1]))  
+       yv = np.array(y1)
     return yv
 
 
@@ -47,12 +47,11 @@ def calcSpectrum(y,Fs):
     Y = Y[range(n/2)]
     return frq, Y
 
-site = ('gisb')
-#site = raw_input("Enter the site code (lower case): ")
+#site = ('gisb')
+site = raw_input("Enter the site code (lower case): ")
 
 
 print "Working on GPS file"
-### work on GPS data - "Fs" defines the frequency (samples per seconds)
 gpsdir = "/home/elidana/work/sdf_mueller/track-outputs/"
 inputfile  = gpsdir+"TRAK200.NEU."+site+".LC"
 Fs = 1.0;               
@@ -62,8 +61,7 @@ Fs = 1.0;
 (frU,yU) = calcSpectrum(U,Fs)
 
 print "Working on Yoshimodel file"
-## work on Yoshi Model
-modeldir   = "/home/elidana/work/sdf_mueller/models/yoshi/model4_dataset1/"
+modeldir   = "/home/elidana/work/sdf_mueller/models/yoshi/model13_dataset1/"
 inputfile1 = modeldir+"GPS_"+site+"_N.dat"
 inputfile2 = modeldir+"GPS_"+site+"_E.dat"
 inputfile3 = modeldir+"GPS_"+site+"_Z.dat"

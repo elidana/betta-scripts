@@ -189,18 +189,23 @@ end
 
 
 ### --- earthquakes ---------------------------------------------------------------
-# cook 2013-07-21 05:09:30 UTC
+###   for daily solution, earthquake time is calculated without considering the
+###   hour of the day, to avoid error on offset timing on est_noise run
+### cook 2013-07-21 05:09:30 UTC
 set eqd = "2013-07-21"
 set eqh = "05 09 30"
 set day = `date -u +"%Y %j" -d $eqd`
 set hour = `echo $eqh | awk 'BEGIN {FS=":"} {printf"%10.5f\n",($1/24)+($2/1440)+($3/86400)}'`
-set cook = `echo $day $hour | awk '{printf"%4i%10.5f\n", $1,($2+$3)}'`
-# grassmere  2013-08-16 02:31:05 UTC
+#set cook = `echo $day $hour | awk '{printf"%4i%10.5f\n", $1,($2+$3)}'`
+set cook = `echo $day | awk '{printf"%4i%10.5f\n", $1,$2}'`
+### grassmere  2013-08-16 02:31:05 UTC
 set eqd = "2013-08-16"
 set eqh = "02 31 05"
 set day = `date -u +"%Y %j" -d $eqd`
 set hour = `echo $eqh | awk 'BEGIN {FS=":"} {printf"%10.5f\n",($1/24)+($2/1440)+($3/86400)}'`
-set grass = `echo $day $hour | awk '{printf"%4i%10.5f\n", $1,($2+$3)}'`
+#set grass = `echo $day $hour | awk '{printf"%4i%10.5f\n", $1,($2+$3)}'`
+set grass = `echo $day | awk '{printf"%4i%10.5f\n", $1,$2}'`
+
 ### ---------------------------------------------------------------------------------
 
 set tmp_dir = tmp.$$

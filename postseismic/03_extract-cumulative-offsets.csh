@@ -55,9 +55,7 @@ cat << END > $out1
 #  lat lon N  E  U  sN  sE  sU  SITE
 #
 END
-#foreach s (CMBL WITH A7R1) 
-foreach s (CMBL)
-#foreach s (`cat sites.list.all | awk '{print toupper($1)}'`)
+foreach s (`cat sites.list.all | awk '{print toupper($1)}'`)
  echo ------------- $s
  set xy = `grep $s $coordfile | awk '{print $1,$2}'`
 

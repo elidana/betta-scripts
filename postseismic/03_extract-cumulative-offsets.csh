@@ -10,42 +10,63 @@
 #### ----------------------------------------------------------
 
 
-set coordfile = /home/elidana/work/cook-earthquakes/20130816_6.6/globk_gras_13225-229.offsets
+set coordfile = /home/elidana/work/cook-earthquakes/sites.lonlat
 set sub = out.onlypost
 set log = out.log
 
-set logs = `pwd`
-set tseries = `pwd`
+set tseries = /home/elidana/work/cook-earthquakes/Hamling-etal_paper/02_review/results
+set logs    = /home/elidana/work/cook-earthquakes/Hamling-etal_paper/02_review/results
 
+## Cook Eq      = doy 202-2013 (21-July)
+## Grassmere Eq = doy 228-2013 (16 August)
 
-set d0 = `echo 2013 208 | awk '{printf"%10.5f\n",$1+($2/365.25)}'`
-set d1 = `echo 2013 232 | awk '{printf"%10.5f\n",$1+($2/365.25)}'`
+## GPS+InSar Grassmere modelling (Initial Submission)
+#set dd1 = 208
+#set dd2 = 232
+#set out1 = cumulative_offsets.dat
 
-set out1 = cumulative_offsets.dat
+## Cook to Grassmere (Cook postseismic)
+set dd1 = 203
+set dd2 = 227
+set out1 = Cook-to-Grassmere_offsets.dat
 
+## Grassmere to InSAR 
+set dd1 = 229
+set dd2 = 232
+set out1 = Grassmere-to-InSAR_offsets.dat
+
+set d0 = `echo 2013 $dd1 | awk '{printf"%10.5f\n",$1+($2/365.25)}'`
+set d1 = `echo 2013 $dd2 | awk '{printf"%10.5f\n",$1+($2/365.25)}'`
+
+echo $d0 $d1
 set tmp = tmp.$$ 
+set scarto = 0.0027
 
 #### ----------------------------------------------------------
 ### --
-### -- offset cosismici campotosto
+### -- offset cosismici
 ### --
 
 cat << END > $out1
 #
-#  coseismic and afterslip cumulative offsets 
-#  doy1 = 2013-208 / doy2 = 2013-232
+#  Cook earthquake sequence cumulative offsets
+#  doy1 = 2013-${dd1} / doy2 = 2013-${dd2}
 #  N, E, U components (mm)
 #  lat lon N  E  U  sN  sE  sU  SITE
 #
 END
-foreach s (CMBL WITH) 
+#foreach s (CMBL WITH A7R1) 
+foreach s (CMBL)
+#foreach s (`cat sites.list.all | awk '{print toupper($1)}'`)
  echo ------------- $s
- #set xy = `grep "^ $s" /raid/sta_info/*sta_pos /datagps/rinex2/igm/2009/sta_info/sta_pos | cl 8 9 10 | xyz2gd - | cl 1 2`
  set xy = `grep $s $coordfile | awk '{print $1,$2}'`
 
   foreach comp (n e u)
-   set a0 = `grep "^$d0" $tseries/${s}_${comp}.${sub} | awk '{print $3}'`
-   set a1 = `grep "^$d1" $tseries/${s}_${comp}.${sub} | awk '{print $3}'`
+   #set a0 = `grep "^$d0" $tseries/${s}_${comp}.${sub} | awk '{print $3}'`
+   #set a1 = `grep "^$d1" $tseries/${s}_${comp}.${sub} | awk '{print $3}'`
+   ## modifica qui sotto e per tenere conto di schifezze yyyy ddd to yyyy.yyyy
+   set a0 = `awk -v a=$d0 -v b=$scarto '{if ($1 > (a-b) && $1 < (a+b)) print $3}' $tseries/${s}_${comp}.${sub} `
+   set a1 = `awk -v a=$d1 -v b=$scarto '{if ($1 > (a-b) && $1 < (a+b)) print $3}' $tseries/${s}_${comp}.${sub} `
 
     if ($#a0 != 0 && $#a1 != 0 ) then
      set cum = `echo $a0 $a1 | awk '{print $2-$1}'`

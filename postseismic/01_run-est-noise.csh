@@ -358,7 +358,8 @@ foreach comp ($components)
    echo est-noise on $in - see ${outname}.log for details
    time est_noise6ac < junk.in > ${outname}.log
 
-  cat resid.out | awk '{printf"%12.5f%10.2f%10.2f%10.2f\n",($1+($2/365.25)),$3,$4,$5}' > ${outname}
+  #cat resid.out | awk '{printf"%12.5f%10.2f%10.2f%10.2f\n",($1+($2/365.25)),$3,$4,$5}' > ${outname}
+  cat resid.out | awk '{printf"%10f%12.5f%10.2f%10.2f%10.2f\n",$1,$2,$3,$4,$5}' > ${outname}
   mv ${outname}.log ../.
   mv ${outname} ../.
 

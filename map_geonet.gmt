@@ -17,7 +17,7 @@
 
 
 ## -- parameters that need to be changed
-set grid  = /home/elidana/Documents/grids/nzwater_full.grd
+set grid  = /scratch/elidana/grids/nzwater_full.grd
 set out   = fig_map-geonet.ps
 set appear = fancy
 #set appear = basic

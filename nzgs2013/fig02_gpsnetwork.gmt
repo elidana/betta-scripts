@@ -24,7 +24,7 @@ set tenhz  = tmp1.$$
 ls /scratch/elidana/hrdata-10hz/raw/2013/???/*c.T0? | awk 'BEGIN {FS="/"} {print substr($NF,1,4)}' \
  | sort -u | awk '{print tolower($1)}' > $tenhz
 
-set grid = /home/elidana/Documents/grids/nzdtm.grd
+set grid = /scratch/elidana/grids/nzdtm.grd
 
 set J = -JM15
 set R = -R173.0/175.5/-42.0/-40.9

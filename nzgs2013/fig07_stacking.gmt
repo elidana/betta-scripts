@@ -11,8 +11,8 @@ set name = TRAK202.NEU
 
 set out = out-figure07.ps
 
-set grid  = /home/elidana/Documents/grids/nzdtm.grd
-set grid1 = /home/elidana/Documents/grids/nzwater_full.grd
+set grid  = /scratch/elidana/grids/nzdtm.grd
+set grid1 = /scratch/elidana/grids/nzwater_full.grd
 set cmtsol = /home/elidana/work/GeoNet_CMT_solutions.csv
 set geonet  = /home/elidana/work/geonet.lonlat
 set linz    = /home/elidana/work/linz.lonlat

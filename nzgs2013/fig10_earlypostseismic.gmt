@@ -7,7 +7,7 @@ gmtset PLOT_CLOCK_FORMAT hh
 set dir = /home/elidana/work/cook-earthquakes/nzgs2013/track-output/30s-daily
 set sta = cmbl
 set STA = `echo $sta | awk '{print toupper($1)}'`
-set grid = /home/elidana/Documents/grids/nzdtm.grd
+set grid = /scratch/elidana/grids/nzdtm.grd
 set geonet  = /home/elidana/work/geonet.lonlat
 
 set out = out-figure10.ps

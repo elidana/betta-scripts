@@ -19,7 +19,7 @@ set linz    = /home/elidana/work/linz.lonlat
 set geos    = /home/elidana/work/cook-earthquakes/nzgs2013/geosyst.lonlat
 set quakes  = quake_20131029_1320.csv
 set cmtsol  = /home/elidana/work/GeoNet_CMT_solutions.csv
-set grid    = /home/elidana/Documents/grids/nzdtm.grd
+set grid    = /scratch/elidana/grids/nzdtm.grd
 
 ## -----
 set quakeid = 2013p543824

@@ -9,7 +9,7 @@ set out = out-figure11.ps
 set indir = postseismic_files
 set sub = out.onlypost
 
-set grid   = /home/elidana/Documents/grids/nzdtm.grd 
+set grid   = /scratch/elidana/grids/nzdtm.grd 
 set geonet = /home/elidana/work/geonet.lonlat
 set quakes = quake_20131029_1320.csv
 

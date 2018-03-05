@@ -1,0 +1,15 @@
+# Station.info written by MSTINF user elidana          on 2018-03-05  10:30
+* Reference file : station.info
+*
+*
+*SITE  Station Name      Session Start      Session Stop       Ant Ht   HtCod  Ant N    Ant E    Receiver Type         Vers                  SwVer  Receiver SN           Antenna Type     Dome   Antenna SN           
+ 1BSL  Test Avalon Bsl1  2017 346 21 16  0  2017 349  1  3  0   0.0000  DHARP   0.0000   0.0000  TRIMBLE NETR9         5.22                   5.22  5207K82212            TRM115000.00     NONE   1440905656          
+ 1BSL  Test Avalon Bsl1  2017 349  1  3  0  2017 351 21 34  0   0.0000  DHARP   0.0000   0.0000  TRIMBLE NETR9         5.22                   5.22  5207K82212            TRM115000.00     NONE   1440905661          
+ 1BSL  Test Avalon Bsl1  2017 351 21 34  0  2017 365 23 59 30   0.0000  DHARP   0.0000   0.0000  TRIMBLE NETR9         5.22                   5.22  5207K82212            TRM115000.00     NONE   1440905656          
+ 1REF  Test Avalon Ref   2017 346  0  0  0  9999 999 23 59 30   0.0000  DHARP   0.0000   0.0000  TRIMBLE NETR9         5.22                   5.22  5034K69679            TRM55971.00      NONE   3027844             
+.
+ 2BSL  Test Avalon Bsl2  2017 346 21 16  0  2017 349  1  3  0   0.0000  DHARP   0.0000   0.0000  TRIMBLE NETR9         5.22                   5.22  5034K69668            TRM115000.00     NONE   1440905661          
+ 2BSL  Test Avalon Bsl2  2017 349  1  3  0  2017 351 21 34  0   0.0000  DHARP   0.0000   0.0000  TRIMBLE NETR9         5.22                   5.22  5034K69668            TRM115000.00     NONE   1440905656          
+ 2BSL  Test Avalon Bsl2  2017 351 21 34  0  2017 365 23 59 30   0.0000  DHARP   0.0000   0.0000  TRIMBLE NETR9         5.22                   5.22  5034K69668            TRM115000.00     NONE   1440905661          
+.
+ AVLN  Avalon Sound Sta  2017 170  3 32 20  9999 999 23 59 30   0.0550  DHARP   0.0000   0.0000  TRIMBLE NETR9         5.22                   5.22  5306K41861            TRM57971.00      NONE   1441047151          

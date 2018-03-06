@@ -4,7 +4,8 @@
 *
 *SITE  Station Name      Session Start      Session Stop       Ant Ht   HtCod  Ant N    Ant E    Receiver Type         Vers                  SwVer  Receiver SN           Antenna Type     Dome   Antenna SN           
  AVLN  Avalon Sound Sta  2017 170  3 32 20  9999 999 23 59 30   0.0550  DHARP   0.0000   0.0000  TRIMBLE NETR9         5.22                   5.22  5306K41861            TRM57971.00      NONE   1441047151          
- 1REF  Test Avalon Ref   2017 346  0  0  0  9999 999 23 59 30   0.0000  DHARP   0.0000   0.0000  TRIMBLE NETR9         5.22                   5.22  5034K69679            TRM55971.00      NONE   3027844             
+ 1REF  Test Avalon Ref   2017 346  0  0  0  2018  54  0  0  0   0.0000  DHARP   0.0000   0.0000  TRIMBLE NETR9         5.22                   5.22  5034K69679            TRM55971.00      NONE   3027844             
+ 1REF  Test Avalon Ref   2018  54  0  0  0  9999 999 23 59 30   0.0000  DHARP   0.0000   0.0000  TRIMBLE NETR9         5.22                   5.22  5034K69673            TRM55971.00      NONE   3027844             
  1BSL  Test Avalon Bsl1  2017 346 21 16  0  2017 349  1  3  0   0.0000  DHARP   0.0000   0.0000  TRIMBLE NETR9         5.22                   5.22  5207K82212            TRM115000.00     NONE   1440905656          
  1BSL  Test Avalon Bsl1  2017 349  1  3  0  2017 351 21 34  0   0.0000  DHARP   0.0000   0.0000  TRIMBLE NETR9         5.22                   5.22  5207K82212            TRM115000.00     NONE   1440905661          
  1BSL  Test Avalon Bsl1  2017 351 21 34  0  2017 365 23 59 30   0.0000  DHARP   0.0000   0.0000  TRIMBLE NETR9         5.22                   5.22  5207K82212            TRM115000.00     NONE   1440905656          

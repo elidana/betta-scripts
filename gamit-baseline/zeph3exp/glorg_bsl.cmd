@@ -18,12 +18,13 @@ x stab_it 4 0.8 3.0
   apr_file ../tables/zephyr3test.apr
 
   apr_neu all 20 20 20 0 0 0
-  apr_neu 1REF F F F 0 0 0
-  apr_neu AVLN F F F 0 0 0
+x  apr_neu 1REF F F F 0 0 0
 x  apr_neu AVLN 0.001 0.001 0.01 0 0 0
+  apr_neu AVLN F F F 0 0 0
  
 * List of stabilization sites
 #   This should match the well-determined sites in the apr_file
-x  use_site clear
-x  use_site 1ref avln
+  stab_site clear
+  stab_site avln
+x stab_site avln 1ref
 

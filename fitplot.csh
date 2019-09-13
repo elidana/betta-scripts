@@ -13,7 +13,7 @@ set s   = `echo $1 | awk '{print toupper($1)}'`
 set net = `echo $2 | awk '{print toupper($1)}'`
 
 
-set address = http://fits.geonet.org.nz/observation
+set address = https://fits.geonet.org.nz/observation
 
 ### ---
 set tmpdir = tmpdir.$$

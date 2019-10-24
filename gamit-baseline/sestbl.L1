@@ -18,8 +18,8 @@ Choice of Observable = L1_ONLY  ; LC_AUTCLN (default), LC_HELP (codeless L2), L1
 Station Error = ELEVATION 10 5    ; 1-way L1, a**2 + (b**2)/(sin(elev)**2) in mm. default = 10. 0.
 AUTCLN reweight = Y               ; Y/N; reweight data from autcln rms; replaces  'Use N-file' in releases < 10.32
 AUTCLN Command File = autcln.cmd  ; Filename; default none (use default options)     
-Decimation Factor = 4             ; FOR SOLVE, default = 1  
-Quick-pre decimation factor = 10  ; 1st iter or autcln pre, default same as Decimation Factor    
+Decimation Factor = 1             ; FOR SOLVE, default = 1  
+Quick-pre decimation factor = 1   ; 1st iter or autcln pre, default same as Decimation Factor    
 Quick-pre observable = L1_ONLY    ;
 
 Ionospheric Constraints =  0.0 mm + 8.00 ppm            

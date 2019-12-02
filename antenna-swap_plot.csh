@@ -29,7 +29,6 @@ set c = `sort -nk 3 ${s}.u | awk '{print $3}' | tail -1`  ## max error
 set a = `sort -nk 2 ${s}.u | head -1 | awk -v a=$c '{print $2-a}'`  ## min du+ err
 set b = `sort -nk 2 ${s}.u | tail -1 | awk -v a=$c '{print $2+a}'`  ## max du+ err
 set t = `grep $s /home/elidana/git/delta/install/antennas.csv | grep -F "TRM115000.00" | cut -d , -f 9 | head -1 | cut -d T -f 1`
-echo $t
 
 ## calculate average 20 days before/after antenna swap
 set lt11 = `sed -n '/'${t}'/=' ${s}.u | awk '{print $1-21}'`
@@ -52,7 +51,6 @@ EOF
 cat << EOF > plot.$$
 stats '${s}.pre' prefix 'PRE'
 stats '${s}.post' prefix 'POST'
-print PRE_mean
 set title "$s"
 set xlabel "time"
 set ylabel "displacement (mm)"
@@ -61,12 +59,19 @@ set bars small
 set timefmt "%Y-%m-%d"
 plot '${s}.u' using 1:2:3 with errorbars title 'Up', '${s}.swap' using 1:2 with lines title 'antenna swap' linetype 5 lw 5, PRE_mean lw 2, POST_mean lw 2
 pause -1 "Hit return to continue"
+set print '${s}.out'
+print (POST_mean - PRE_mean)
 EOF
 
 
 gnuplot plot.$$
+mv ${s}.out ../.
 
 cd ..
-#rm -fr tmpdir.$$
+rm -fr tmpdir.$$
+
+echo ""
+echo "Antenna offset for " ${s} is `cat ${s}.out` mm
+echo ""
 
 

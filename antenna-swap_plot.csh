@@ -37,25 +37,29 @@ set lt12 = `sed -n '/'${t}'/=' ${s}.u | awk '{print $1-1}'`
 set lt21 = `sed -n '/'${t}'/=' ${s}.u | awk '{print $1+1}'`
 set lt22 = `sed -n '/'${t}'/=' ${s}.u | awk '{print $1+21}'`
 
-sed -n ''${lt11}','${lt12}'p' ${s}.u > ${s}.pre
-sed -n ''${lt21}','${lt22}'p' ${s}.u > ${s}.post
+sed -n ''${lt11}','${lt12}'p' ${s}.u | awk '{print $2}' > ${s}.pre
+sed -n ''${lt21}','${lt22}'p' ${s}.u | awk '{print $2}' > ${s}.post
+
+
+### Plot
 
 cat << EOF > ${s}.swap
 $t $a
 $t $b
 EOF
 
-#set format x "%Y/%m"
 
 cat << EOF > plot.$$
+stats '${s}.pre' prefix 'PRE'
+stats '${s}.post' prefix 'POST'
+print PRE_mean
 set title "$s"
 set xlabel "time"
-set ylabel "vertical displacement (mm)"
+set ylabel "displacement (mm)"
 set xdata time
 set bars small
 set timefmt "%Y-%m-%d"
-plot '${s}.swap' using 1:2 with lines title 'antenna swap', '${s}.u' using 1:2:3 with errorbars title 'Up'
-stats '${s}.pre'
+plot '${s}.u' using 1:2:3 with errorbars title 'Up', '${s}.swap' using 1:2 with lines title 'antenna swap' linetype 5 lw 5, PRE_mean lw 2, POST_mean lw 2
 pause -1 "Hit return to continue"
 EOF
 
@@ -63,6 +67,6 @@ EOF
 gnuplot plot.$$
 
 cd ..
-rm -fr tmpdir.$$
+#rm -fr tmpdir.$$
 
 

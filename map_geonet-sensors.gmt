@@ -1,0 +1,57 @@
+#! /bin/bash
+
+## -- parameters that need to be changed
+out=fig_map-geonet.ps
+
+appear=basic
+
+
+### --- GMT settings
+gmt gmtdefaults -D > .gmtdefaults4
+gmt gmtset PS_MEDIA A4
+gmt gmtset FONT_LABEL 10
+gmt gmtset MAP_FRAME_TYPE plain
+
+## region of interest for main map
+R=-R165/190/-52/-24
+J=-JM18
+B=-B1a5WSne
+
+## symbol colors
+gnss="-St0.2 -Gdarkturquoise -W0.1"
+sp="-Sc0.2 -Gpink -W0.1"
+sm="-Ss0.2 -Gdarkgreen -W0.1"
+dart="-Sc0.3 -Gblue -W0.1"
+tg="-Si0.2 -Glightblue -W0.1"
+en="-Sd0.3 -Gyellow -W0.1"
+cam="-Ss0.2 -Gred -W0.1"
+
+
+# gnss
+grep 9999-01 ~/git/delta/network/marks.csv  | cut -d, -f 5,6 | sed -e 's/,/ /g' > gnss.$$
+# seism and acoustic
+grep 9999-01 ~/git/delta/network/stations.csv | egrep -v ",SB,|,SM,|,SC,|,SX,|,EN,|,TD,|,TG," | cut -d, -f 4,5 | sed -e 's/,/ /g' > sp.$$
+# strong motion (SB, SM, SC, SX)
+grep 9999-01 ~/git/delta/network/stations.csv | egrep ',SB,|,SM,|,SC,|,SX,' | cut -d, -f 4,5 | sed -e 's/,/ /g' > sm.$$
+# environmental (EN)
+grep 9999-01 ~/git/delta/network/stations.csv | grep ",EN," | cut -d, -f 4,5 | sed -e 's/,/ /g' > en.$$
+# dart (TD)
+grep 9999-01 ~/git/delta/network/stations.csv | grep ",TD," | cut -d, -f 4,5 | sed -e 's/,/ /g' > dart.$$
+# tide gauge (TG)
+grep 9999-01 ~/git/delta/network/stations.csv | grep ",TG," | cut -d, -f 4,5 | sed -e 's/,/ /g' > tg.$$
+# cameras
+grep 9999-01 ~/git/delta/network/mounts.csv | cut -d, -f 4,5 | sed -e 's/,/ /g' > cam.$$
+
+
+gmt pscoast $J $R -Glightgray -W1/gray52 -Dh -P -K > $out
+gmt psxy sm.$$ $J $R -: $sm  -K -O >> $out
+gmt psxy sp.$$ $J $R -: $sp  -K -O >> $out
+gmt psxy dart.$$ $J $R -: $dart  -K -O >> $out
+gmt psxy tg.$$ $J $R -: $tg  -K -O >> $out
+gmt psxy cam.$$ $J $R -: $cam  -K -O >> $out
+gmt psxy gnss.$$ $J $R -: $gnss -K -O >> $out
+gmt psxy en.$$ $J $R -: $en -O >> $out
+
+rm *.$$ 
+
+gs $out

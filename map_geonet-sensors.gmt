@@ -19,13 +19,13 @@ J=-JM18
 B=-B1a5WSne
 
 ## symbol colors
-gnss="-St0.2 -Gdarkturquoise -W0.1"
-sp="-Sc0.2 -Gpink -W0.1"
-sm="-Ss0.2 -Gdarkgreen -W0.1"
-dart="-Sc0.3 -Gblue -W0.1"
-tg="-Si0.3 -Gblue -W0.1"
-en="-Sd0.3 -Gyellow -W0.1"
-cam="-Ss0.2 -Gred -W0.1"
+sp="-Sc0.1 -Gdarkgreen"
+sm="-Sc0.1 -Gdarkgreen"
+gnss="-St0.2 -Gdarkturquoise"
+en="-Sd0.2 -Gyellow"
+cam="-Ss0.2 -Gred"
+tg="-Si0.2 -Gblue"
+dart="-Sc0.2 -Gblue"
 
 
 # gnss
@@ -51,8 +51,16 @@ gmt psxy dart.$$ $J $R -: $dart -K -O >> $out
 gmt psxy tg.$$ $J $R -: $tg -K -O >> $out
 gmt psxy cam.$$ $J $R -: $cam -K -O >> $out
 gmt psxy gnss.$$ $J $R -: $gnss -K -O >> $out
-gmt psxy en.$$ $J $R -: $en -O >> $out
+gmt psxy en.$$ $J $R -: $en -K -O >> $out
+
+gmt pslegend -Dx0.5i/0.5i+w5i/3.3i+jBL+l1. -O << EOF >> $out
+S 0.1 s 0.25 darkgreen     0.25p 0.3 seismic sensor
+S 0.1 c 0.25 blue          0.25p 0.3 water pressure sensor
+S 0.1 t 0.25 darkturquoise 0.25p 0.3 GNSS
+S 0.1 d 0.25 yellow        0.25p 0.3 environmental sensor
+S 0.1 s 0.25 red           0.25p 0.3 camera
+EOF
 
 rm *.$$ 
 
-gs $out
+evince $out

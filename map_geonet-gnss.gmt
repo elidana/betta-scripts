@@ -1,0 +1,60 @@
+#! /bin/bash
+
+### NZ fault database from https://data.gns.cri.nz/af/
+### NZ CORS commercial stations from https://data.linz.govt.nz/
+### GeoNet and PositioNZ stations from https://github.com/geoNet/delta/
+
+out=fig_map-geonet.ps
+appear=basic
+
+
+### --- GMT settings
+gmt gmtdefaults -D > .gmtdefaults4
+gmt gmtset FONT_LABEL 10
+gmt gmtset MAP_FRAME_TYPE plain
+
+## region of interest for main map
+R=-R165/185/-48/-28
+J=-JM18
+B=-B1a5WSne
+
+## symbol colors
+ldb="-Sc0.1 -Gturquoise"
+gnss="-St0.2 -Gblue"
+gnss1="-St0.1 -Gblue"
+tg="-Si0.2 -Gblue"
+
+### -- prepare files
+## faults
+cat NZAFD/Text/NZAFD_Oct_2020_WGS84.txt | awk '{print NF, $0}' | grep "^1 " | sed -e 's/END/>/g' | awk '{print $2}' > faults.$$
+# all from LINZ
+grep CORS nz-geodetic-marks.csv | cut -d, -f 11,12  | sed -e 's/,/ /g' > linzdb.$$
+# GeoNet
+cat ~/git/delta/network/marks.csv  | cut -d, -f 5,6 | sed -e 's/,/ /g' > gnss1.$$
+grep 9999-01 ~/git/delta/network/marks.csv  | cut -d, -f 5,6 | sed -e 's/,/ /g' > gnss.$$
+grep 9999-01 ~/git/delta/network/stations.csv | grep ",TG," | cut -d, -f 4,5 | sed -e 's/,/ /g' > tg.$$
+
+
+### -- plot
+gmt pscoast $J $R -Glightgray -W1/gray52 -Dh -P -K > $out
+gmt psxy faults.$$ $J $R -Sf0.01+l+f -W0.01,lightred -h1 -K -O >> $out 
+
+gmt psxy linzdb.$$ $J $R -: $ldb -K -O >> $out
+#gmt psxy tg.$$ $J $R -: $tg -K -O >> $out
+gmt psxy gnss1.$$ $J $R -: $gnss1 -K -O >> $out
+gmt psxy gnss.$$ $J $R -: $gnss -K -O >> $out
+
+gmt pslegend -Dx0.2i/0.5i+w5i/3.3i+jBL+l1. -O << EOF >> $out
+T continuous GNSS
+G 0.5
+S 0.1 c 0.25 blue 0.25p 0.3 GeoNet and PositioNZ
+G 0.1
+S 0.1 c 0.25 turquoise 0.25p 0.3 commercial operators
+EOF
+#S 0.1 i 0.25 blue          0.25p 0.3 coastal gauge
+
+gmt ps2raster -TG $out
+
+rm *.$$ 
+
+evince $out

@@ -63,4 +63,6 @@ EOF
 
 rm *.$$ 
 
+gmt psconvert -Tg $out
+
 evince $out

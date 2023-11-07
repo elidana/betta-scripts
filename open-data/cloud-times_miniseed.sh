@@ -20,12 +20,12 @@ echo "-------------------------------------------------------"
 
 
 ### folder download
-echo "------------------ miniseed, 1 day, 7 stations, all ?n? channels --------------------"
-echo "7 stations from aws"
+echo "------------------ miniseed, 1 day, 7 stations, 1 channel --------------------"
+echo "AWS"
 time aws s3 sync --quiet --no-sign-request s3://geonet-open-data/waveforms/miniseed/2022/2022.245/  $awsout --exclude "*" --include "D*.NZ/*-HNZ.*"
 echo ""
 #
-echo "7 stations from FDSN"
+echo "FDSN"
 cat << EOF > post_input.txt
 NZ DALS 20 HNZ 2022-01-09T00:00:00 2022-01-09T23:59:59
 NZ DCZ  20 HNZ 2022-01-09T00:00:00 2022-01-09T23:59:59
@@ -38,3 +38,9 @@ EOF
 time curl --silent --data-binary @post_input.txt http://service.geonet.org.nz/fdsnws/dataselect/1/query -o ${fdsnout}/test_post.mseed
 echo ""
 echo "-------------------------------------------------------"
+
+
+## folder download more data
+echo "------------------ miniseed, 1 day, 7 stations, all N channels --------------------"
+echo "AWS"
+time aws s3 sync --quiet --no-sign-request s3://geonet-open-data/waveforms/miniseed/2022/2022.245/  $awsout --exclude "*" --include "D*.NZ/*"

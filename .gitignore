@@ -1,0 +1,6 @@
+## GMT related
+.gmtdefaults4
+gmt.conf
+gmt.history
+*.ps
+

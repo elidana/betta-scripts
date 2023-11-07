@@ -7,7 +7,7 @@ appear=basic
 
 
 ### --- GMT settings
-gmt gmtdefaults -D > .gmtdefaults4
+gmt gmtdefaults -Ds > .gmtdefaults4
 #gmt gmtset PS_MEDIA A4
 gmt gmtset FONT_LABEL 10
 gmt gmtset MAP_FRAME_TYPE plain
@@ -53,7 +53,7 @@ gmt psxy cam.$$ $J $R -: $cam -K -O >> $out
 gmt psxy gnss.$$ $J $R -: $gnss -K -O >> $out
 gmt psxy en.$$ $J $R -: $en -K -O >> $out
 
-gmt pslegend -Dx0.5i/0.5i+w5i/3.3i+jBL+l1. -O << EOF >> $out
+gmt pslegend -Dx0.3i/0.5i+w5i/3.3i+jBL+l1. -O << EOF >> $out
 S 0.1 s 0.25 darkgreen     0.25p 0.3 seismic sensor
 S 0.1 c 0.25 blue          0.25p 0.3 water pressure sensor
 S 0.1 t 0.25 darkturquoise 0.25p 0.3 GNSS
